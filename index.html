@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JHora AI 提问助手</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- ===== 顶部导航 ===== -->
+        <header class="header">
+            <h1>✦ JHora AI 提问助手</h1>
+            <div class="header-actions">
+                <button class="btn btn-gold-outline" onclick="location.href='https://jhora-clean.pages.dev/'">🧹 去清洗星盘</button>
+                <button class="btn btn-gold-outline" onclick="openTutorialModal()">📘 使用指南</button>
+            </div>
+        </header>
+
+        <!-- ===== 第一步：选择主题 ===== -->
+        <div class="step-section" id="step1">
+            <div class="step-label">❶ 你想问什么？</div>
+            <div class="topic-grid" id="topicGrid">
+                <div class="topic-card active" data-topic="love" onclick="selectTopic('love')">
+                    <div class="icon">❤️</div>
+                    <div class="name">感情婚姻</div>
+                    <div class="desc">脱单 / 恋爱 / 婚姻 / 复合</div>
+                </div>
+                <div class="topic-card" data-topic="career" onclick="selectTopic('career')">
+                    <div class="icon">💼</div>
+                    <div class="name">事业发展</div>
+                    <div class="desc">求职 / 晋升 / 创业 / 转行</div>
+                </div>
+                <div class="topic-card" data-topic="wealth" onclick="selectTopic('wealth')">
+                    <div class="icon">💰</div>
+                    <div class="name">财富运势</div>
+                    <div class="desc">收入 / 投资 / 债务 / 储蓄</div>
+                </div>
+                <div class="topic-card" data-topic="health" onclick="selectTopic('health')">
+                    <div class="icon">🧘</div>
+                    <div class="name">身心健康</div>
+                    <div class="desc">体质 / 手术 / 情绪 / 孕期</div>
+                </div>
+                <div class="topic-card" data-topic="study" onclick="selectTopic('study')">
+                    <div class="icon">📚</div>
+                    <div class="name">学业教育</div>
+                    <div class="desc">考试 / 择校 / 学术潜力</div>
+                </div>
+                <div class="topic-card" data-topic="dasha" onclick="selectTopic('dasha')">
+                    <div class="icon">🌊</div>
+                    <div class="name">大运流年</div>
+                    <div class="desc">当前运势 / 未来节点 / 人生周期</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 第二步：选择子场景 ===== -->
+        <div class="step-section" id="step2" style="display:none;">
+            <div class="step-label">❷ 具体是哪种情况？</div>
+            <div class="subtopic-grid" id="subtopicGrid">
+                <!-- 由 JS 动态渲染 -->
+            </div>
+        </div>
+
+        <!-- ===== 第三步：勾选问题清单 ===== -->
+        <div class="step-section" id="step3" style="display:none;">
+            <div class="step-label">❸ 你想了解哪些方面？<span style="font-weight:400;font-size:12px;color:#7a8392;text-transform:none;">（可多选，至少选1个）</span></div>
+            <div class="question-grid" id="questionGrid">
+                <!-- 由 JS 动态渲染 -->
+            </div>
+            <div style="margin-top:16px;text-align:right;">
+                <button class="btn btn-primary" onclick="generatePrompt()">🚀 生成专属提问话术</button>
+                <button class="btn btn-gold-outline" onclick="selectAllQuestions()" style="margin-right:8px;">☑️ 全选</button>
+                <button class="btn btn-gold-outline" onclick="deselectAllQuestions()">⬜ 清空</button>
+            </div>
+        </div>
+
+        <!-- ===== 第四步：方案看板（实时预览） ===== -->
+        <div class="step-section" id="step4" style="display:none;">
+            <div class="step-label">❹ 你的专属分析方案</div>
+            <div class="plan-card" id="planCard">
+                <div class="plan-row">
+                    <div class="plan-left">
+                        <div class="plan-title">📋 数据准备清单</div>
+                        <div class="data-tags" id="planDataTags"></div>
+                        <div class="data-explain" id="planDataExplain"></div>
+                    </div>
+                    <div class="plan-right">
+                        <div class="plan-title">📝 你关注的问题</div>
+                        <ul id="planSelectedQuestions"></ul>
+                    </div>
+                </div>
+                <div class="plan-action">
+                    <button class="btn btn-primary" onclick="generatePrompt()">🚀 生成专属提问话术</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 底部 Footer ===== -->
+        <div class="footer">
+            <strong>📄 使用流程：</strong> ① 选择主题 → ② 选择子场景 → ③ 勾选你关心的问题 → ④ 生成专属提问话术
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== 模态框：教程 ===== -->
+    <div class="modal-overlay" id="tutorialModal">
+        <div class="modal-box" style="max-width:700px;">
+            <button class="close-btn" onclick="closeModal('tutorialModal')">✕</button>
+            <h3>📘 使用指南</h3>
+            <div class="sub">四步生成专属提问话术，让 AI 精准回答你的问题</div>
+            <div class="tutorial-body">
+                <div class="section">
+                    <div class="st">▸ 第一步：选择主题</div>
+                    <p style="color:#d0d4dc;font-size:14px;">点击你当前最关心的领域：感情、事业、财运、健康、学业或大运流年。</p>
+                </div>
+                <div class="section">
+                    <div class="st">▸ 第二步：选择子场景</div>
+                    <p style="color:#d0d4dc;font-size:14px;">选择你的具体情况，比如「单身脱单」还是「已婚趋势」。</p>
+                </div>
+                <div class="section">
+                    <div class="st">▸ 第三步：勾选问题</div>
+                    <p style="color:#d0d4dc;font-size:14px;">勾选你真正想知道的问题，系统会为你拼装专属的分析话术。</p>
+                </div>
+                <div class="section">
+                    <div class="st">▸ 第四步：生成并复制</div>
+                    <p style="color:#d0d4dc;font-size:14px;">点击「生成」，复制 Prompt，粘贴到 AI 平台，替换【星盘数据】即可。</p>
+                </div>
+                <div class="highlight-box" style="border-left-color:#b8943c;">
+                    💡 <strong>提示：</strong>如果你还没有清洗好的星盘数据，请先使用 <strong>「🧹 去清洗星盘」</strong> 工具。
+                </div>
+            </div>
+            <div style="margin-top:16px;text-align:right;">
+                <button class="btn btn-primary" onclick="closeModal('tutorialModal')">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 模态框：Prompt 结果 ===== -->
+    <div class="modal-overlay" id="promptResultModal">
+        <div class="modal-box" style="max-width:720px;">
+            <button class="close-btn" onclick="closeModal('promptResultModal')">✕</button>
+            <h3>📝 复制这段话给 AI</h3>
+            <div class="sub" id="resultSub">已根据你的选择生成专属提问话术</div>
+
+            <div class="output-area" style="margin-bottom:12px;">
+                <textarea id="resultPrompt" readonly style="min-height:240px;font-size:12px;line-height:1.8;"></textarea>
+            </div>
+
+            <!-- 折叠术语解释 -->
+            <div class="glossary-collapse" onclick="toggleGlossary()">
+                📖 查看本方案涉及的专业术语
+            </div>
+            <div id="glossaryContent" style="display:none;margin-top:10px;padding:12px 16px;background:#0f1620;border-radius:8px;border:1px solid #26303e;">
+                <div id="glossaryInner"></div>
+            </div>
+
+            <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;">
+                <button class="btn btn-primary" onclick="copyPrompt()">📋 复制 Prompt</button>
+                <button class="btn btn-gold-outline" onclick="openAI('chatgpt')">🤖 ChatGPT</button>
+                <button class="btn btn-gold-outline" onclick="openAI('deepseek')">🧠 DeepSeek</button>
+                <button class="btn btn-gold-outline" onclick="openAI('claude')">🌐 Claude</button>
+                <button class="btn btn-danger" onclick="closeModal('promptResultModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
