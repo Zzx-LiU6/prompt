@@ -21,14 +21,25 @@ function renderPromptFromBlocks(topicKey, scenarioKey, selectedQuestionIds) {
     // ① 角色设定
     prompt += buildRoleBlock(topicKey, scenarioKey);
 
-    // ② 用户需求
+    // ② 合盘全局架构扫描 + 现实检视
+    if (topicKey === 'love' && scenarioKey === 'synastry') {
+        if (scenario.globalFramework) {
+            prompt += scenario.globalFramework + '\n\n';
+        }
+        if (scenario.realityCheck) {
+            prompt += scenario.realityCheck + '\n\n';
+        }
+        prompt += `【全局扫描与问题分析的连接规则】\n`;
+        prompt += `- 你在上面执行的「关系架构扫描」结果，是回答后续所有具体问题的起点。\n`;
+        prompt += `- 每个问题的回答中，必须引用至少一个全局扫描中发现的关键模式（如双向互入、多指标共振、关系类型判定）。\n`;
+        prompt += `- 避免孤立地分析单个配置，始终将其放在全局扫描的框架中解读。\n\n`;
+    }
+
+    // ③ 用户需求
     prompt += buildUserNeedsBlock(topicKey, scenarioKey, selectedQuestions);
 
-    // ③ 分析框架（每个问题的 answerMap）
+    // ④ 分析框架（每个问题的 answerMap）
     prompt += buildAnalysisFrameworkBlock(topicKey, scenarioKey, selectedQuestions);
-
-    // ④ 数据要求（必选/可选星体）
-    //prompt += buildDataRequirementsBlock(topicKey, scenarioKey);
 
     // ⑤ 合盘专属：相位分析细则
     if (topicKey === 'love' && scenarioKey === 'synastry') {
