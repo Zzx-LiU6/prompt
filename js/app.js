@@ -122,12 +122,12 @@ function selectSubtopic(subKey) {
     });
 
     const step3 = document.getElementById('step3');
-    const stepDataInput = document.getElementById('stepDataInput');
     const step4 = document.getElementById('step4');
+    const stepDataInput = document.getElementById('stepDataInput');
 
     if (step3) step3.style.display = 'block';
-    if (stepDataInput) stepDataInput.style.display = 'block';
     if (step4) step4.style.display = 'none';
+    if (stepDataInput) stepDataInput.style.display = 'none';  // 先隐藏，等用户勾选问题后再显示
 
     renderQuestions();
 }
@@ -169,11 +169,15 @@ function updateSelection() {
     updatePlanPreview();
 
     const step4 = document.getElementById('step4');
+    const stepDataInput = document.getElementById('stepDataInput');
+
     if (step4) {
         if (selectedQuestions.length > 0) {
             step4.style.display = 'block';
+            if (stepDataInput) stepDataInput.style.display = 'block';  // 方案出现后再显示输入框
         } else {
             step4.style.display = 'none';
+            if (stepDataInput) stepDataInput.style.display = 'none';
         }
     }
 }
