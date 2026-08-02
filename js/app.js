@@ -32,6 +32,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === this) this.classList.remove('open');
         });
     });
+
+    // 初始化主题
+    selectTopic('love');
+    // 更新历史角标
+    updatePromptHistoryBadge();
 });
 
 function openTutorialModal() {
@@ -286,6 +291,13 @@ function generatePrompt() {
     document.getElementById('resultSub').textContent =
         `主题：${config.name} ｜ 场景：${sub.name} ｜ 已选 ${selectedQuestions.length} 个问题`;
 
+    // ===== 保存历史记录 =====
+    const questionLabels = selectedQuestions.map(id => {
+        const q = sub.questions.find(q => q.id === id);
+        return q ? q.label : id;
+    });
+    savePromptHistory(prompt, config.name, sub.name, questionLabels);
+
     // 术语表
     const glossary = getGlossary(currentTopic, currentSubtopic);
     const inner = document.getElementById('glossaryInner');
@@ -332,8 +344,98 @@ function fallbackCopy(text) {
 }
 
 // =============================================================
-// 七、页面初始化
+// 七、Prompt 历史记录
 // =============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    selectTopic('love');
-});
+
+function getPromptHistory() {
+    try {
+        const data = localStorage.getItem('promptHistory');
+        return data ? JSON.parse(data) : [];
+    } catch { return []; }
+}
+
+function savePromptHistory(content, topic, subtopic, questions) {
+    if (!content || content.trim().length < 10) return;
+    const history = getPromptHistory();
+    const entry = {
+        id: Date.now(),
+        time: new Date().toLocaleString('zh-CN', { hour12: false }),
+        topic: topic || '未知主题',
+        subtopic: subtopic || '未知场景',
+        questions: questions || [],
+        content: content,
+        preview: content.replace(/\n/g, ' ').slice(0, 80) + (content.length > 80 ? '…' : '')
+    };
+    // 去重：如果内容完全一样就不重复保存
+    const exists = history.some(h => h.content === content);
+    if (exists) return;
+    history.unshift(entry);
+    while (history.length > 50) history.pop();
+    localStorage.setItem('promptHistory', JSON.stringify(history));
+    updatePromptHistoryBadge();
+}
+
+function updatePromptHistoryBadge() {
+    const history = getPromptHistory();
+    const badge = document.getElementById('promptHistoryBadge');
+    if (badge) {
+        badge.textContent = history.length > 0 ? `(${history.length})` : '';
+    }
+}
+
+function openPromptHistoryModal() {
+    const history = getPromptHistory();
+    const list = document.getElementById('promptHistoryList');
+    if (!list) return;
+
+    if (history.length === 0) {
+        list.innerHTML = `<div class="history-empty">暂无历史记录<br><span style="font-size:12px;color:#4a5363;">生成 Prompt 后会自动保存</span></div>`;
+        document.getElementById('promptHistoryModal').classList.add('open');
+        return;
+    }
+
+    let html = '';
+    history.forEach((item) => {
+        const questionsStr = item.questions.length > 0 ? item.questions.join('、') : '无具体问题';
+        html += `
+            <div class="history-item" onclick="loadPromptHistory(${item.id})">
+                <span class="del" onclick="event.stopPropagation();deletePromptHistory(${item.id})">✕</span>
+                <div class="time">${item.time}</div>
+                <div style="font-size:12px;color:#7a8392;margin-bottom:2px;">${item.topic} → ${item.subtopic} ｜ 问题：${questionsStr}</div>
+                <div class="preview">${item.preview}</div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+    document.getElementById('promptHistoryModal').classList.add('open');
+}
+
+function loadPromptHistory(id) {
+    const history = getPromptHistory();
+    const entry = history.find(h => h.id === id);
+    if (entry) {
+        document.getElementById('resultPrompt').value = entry.content;
+        closeModal('promptHistoryModal');
+        showToast('✅ 已恢复历史 Prompt，可直接复制');
+        // 打开结果弹窗方便复制
+        document.getElementById('promptResultModal').classList.add('open');
+    }
+}
+
+function deletePromptHistory(id) {
+    let history = getPromptHistory();
+    history = history.filter(h => h.id !== id);
+    localStorage.setItem('promptHistory', JSON.stringify(history));
+    updatePromptHistoryBadge();
+    openPromptHistoryModal();
+    showToast('🗑 已删除');
+}
+
+function clearAllPromptHistory() {
+    if (confirm('确定要清空所有 Prompt 历史记录吗？')) {
+        localStorage.removeItem('promptHistory');
+        updatePromptHistoryBadge();
+        openPromptHistoryModal();
+        showToast('🗑 已清空全部历史');
+    }
+}
