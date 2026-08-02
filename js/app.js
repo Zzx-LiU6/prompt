@@ -9,28 +9,18 @@ let currentTopic = 'love';
 let currentSubtopic = null;
 let selectedQuestions = [];
 
-function receiveCleanData() {
-    // 从 localStorage 读取
-    const stored = localStorage.getItem('jhoraCleanData');
-    if (stored) {
-        window._cleanData = stored;
-        localStorage.removeItem('jhoraCleanData');  // 读取后清除，避免残留
-        setTimeout(() => {
-            showToast('✅ 已接收星盘数据，生成 Prompt 时会自动填入');
-        }, 500);
-        console.log('✅ 已接收星盘数据，长度:', window._cleanData.length);
+function goToPrompt() {
+    const output = document.getElementById('outputText');
+    const data = output.value.trim();
+
+    if (!data) {
+        showToast('⚠️ 输出区为空，请先生成星盘数据');
         return;
     }
 
-    // 兼容旧方式：从 URL 参数读取（备用）
-    const params = new URLSearchParams(window.location.search);
-    const data = params.get('data');
-    if (data) {
-        window._cleanData = decodeURIComponent(data);
-        showToast('✅ 已接收星盘数据（URL方式）');
-        // 清除 URL 参数，避免刷新页面时重复提示
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    // 用 URL 参数传递
+    const encoded = encodeURIComponent(data);
+    window.open(`https://jhora-prompt.pages.dev?data=${encoded}`, '_blank');
 }
 
 // =============================================================
@@ -326,6 +316,40 @@ function fallbackCopy(text) {
         showToast('📝 Prompt 已复制');
     } catch (e) {
         showToast('⚠️ 复制失败，请手动选择复制');
+    }
+}
+
+// =============================================================
+// 接收从 Clean 传来的数据
+// =============================================================
+function receiveCleanData() {
+    // 1. 从 URL 参数读取
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get('data');
+    if (data) {
+        try {
+            window._cleanData = decodeURIComponent(data);
+            showToast('✅ 已接收星盘数据');
+            // 清除 URL 参数，避免刷新页面时重复提示
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log('📊 已接收数据，长度:', window._cleanData.length);
+            return;
+        } catch (e) {
+            console.error('❌ 解码失败:', e);
+        }
+    }
+
+    // 2. 备用：从 localStorage 读取（同域时可用）
+    try {
+        const stored = localStorage.getItem('jhoraCleanData');
+        if (stored) {
+            window._cleanData = stored;
+            localStorage.removeItem('jhoraCleanData');
+            showToast('✅ 已接收星盘数据（localStorage）');
+            console.log('📊 已接收数据，长度:', window._cleanData.length);
+        }
+    } catch (e) {
+        console.error('❌ localStorage 读取失败:', e);
     }
 }
 
