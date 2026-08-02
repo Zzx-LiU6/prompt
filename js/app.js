@@ -256,7 +256,7 @@ function generatePrompt() {
         return;
     }
 
-    // ===== 替换星盘数据 =====
+    // ===== 替换星盘数据（从用户输入框读取） =====
     const userDataInput = document.getElementById('userDataInput');
     let userData = '';
 
@@ -264,13 +264,13 @@ function generatePrompt() {
         userData = userDataInput.value.trim();
     }
 
-    // 如果输入框没有数据，尝试从 URL 参数读取
+    // 如果输入框没有数据，尝试从 URL 参数读取（备用）
     if (!userData && window._cleanData) {
         userData = window._cleanData;
     }
 
     if (userData) {
-        // 直接替换整个【星盘数据】区域
+        // 替换整个【星盘数据】区域
         const dataSectionRegex = /【星盘数据】\n[^【]*/;
         const newDataSection = `【星盘数据】\n${userData}\n`;
         prompt = prompt.replace(dataSectionRegex, newDataSection);
@@ -283,7 +283,7 @@ function generatePrompt() {
     document.getElementById('resultSub').textContent =
         `主题：${config.name} ｜ 场景：${sub.name} ｜ 已选 ${selectedQuestions.length} 个问题`;
 
-    // 使用 getGlossary（优先手动，无则自动生成）
+    // 术语表
     const glossary = getGlossary(currentTopic, currentSubtopic);
     const inner = document.getElementById('glossaryInner');
     if (glossary.length > 0) {
@@ -329,44 +329,8 @@ function fallbackCopy(text) {
 }
 
 // =============================================================
-// 七、接收从 Clean 传来的数据
-// =============================================================
-function receiveCleanData() {
-    // 1. 从 URL 参数读取
-    const params = new URLSearchParams(window.location.search);
-    const data = params.get('data');
-    if (data) {
-        try {
-            window._cleanData = decodeURIComponent(data);
-            showToast('✅ 已接收星盘数据');
-            // 清除 URL 参数，避免刷新页面时重复提示
-            window.history.replaceState({}, document.title, window.location.pathname);
-            console.log('📊 已接收数据，长度:', window._cleanData.length);
-            return;
-        } catch (e) {
-            console.error('❌ 解码失败:', e);
-        }
-    }
-
-    // 2. 备用：从 localStorage 读取（同域时可用）
-    try {
-        const stored = localStorage.getItem('jhoraCleanData');
-        if (stored) {
-            window._cleanData = stored;
-            localStorage.removeItem('jhoraCleanData');
-            showToast('✅ 已接收星盘数据（localStorage）');
-            console.log('📊 已接收数据，长度:', window._cleanData.length);
-        }
-    } catch (e) {
-        console.error('❌ localStorage 读取失败:', e);
-    }
-}
-
-// =============================================================
-// 八、页面初始化
+// 七、页面初始化
 // =============================================================
 document.addEventListener('DOMContentLoaded', function() {
     selectTopic('love');
-    // ===== 接收从 clean 传来的数据 =====
-    receiveCleanData();
 });
