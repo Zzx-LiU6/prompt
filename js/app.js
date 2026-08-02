@@ -9,20 +9,6 @@ let currentTopic = 'love';
 let currentSubtopic = null;
 let selectedQuestions = [];
 
-function goToPrompt() {
-    const output = document.getElementById('outputText');
-    const data = output.value.trim();
-
-    if (!data) {
-        showToast('⚠️ 输出区为空，请先生成星盘数据');
-        return;
-    }
-
-    // 用 URL 参数传递
-    const encoded = encodeURIComponent(data);
-    window.open(`https://jhora-prompt.pages.dev?data=${encoded}`, '_blank');
-}
-
 // =============================================================
 // 二、工具函数（Toast / Modal）
 // =============================================================
@@ -264,32 +250,33 @@ function generatePrompt() {
     const sub = config.subtopics[currentSubtopic];
     if (!sub) { showToast('⚠️ 请选择子场景'); return; }
 
-    const prompt = renderPrompt(currentTopic, currentSubtopic, selectedQuestions);
+    let prompt = renderPrompt(currentTopic, currentSubtopic, selectedQuestions);
     if (!prompt) {
         showToast('⚠️ 生成失败，请重试');
         return;
     }
-    
+
+    // ===== 替换星盘数据 =====
     const userDataInput = document.getElementById('userDataInput');
+    let userData = '';
+
     if (userDataInput) {
-        const userData = userDataInput.value.trim();
-        if (userData) {
-            // 查找【星盘数据】部分并替换
-            // 方法：把占位符替换成用户数据
-            const placeholderPattern = /（请在此处粘贴您的标准化星盘文本）/;
-            const synastryPattern = /（请在此处粘贴双方标准化星盘文本）/;
-            
-            if (prompt.match(placeholderPattern) || prompt.match(synastryPattern)) {
-                prompt = prompt.replace(placeholderPattern, userData);
-                prompt = prompt.replace(synastryPattern, userData);
-                // 如果替换成功，删除多余的提示
-                prompt = prompt.replace(/提示：您可以从 JHora 清洗工具复制数据粘贴到此区域。\n?/, '');
-            } else {
-                // 如果没有找到占位符，说明可能已经被替换过了，直接追加数据
-                // 但通常不会出现这种情况
-                console.log('⚠️ 未找到星盘数据占位符，请检查');
-            }
-        }
+        userData = userDataInput.value.trim();
+    }
+
+    // 如果输入框没有数据，尝试从 URL 参数读取
+    if (!userData && window._cleanData) {
+        userData = window._cleanData;
+    }
+
+    if (userData) {
+        // 直接替换整个【星盘数据】区域
+        const dataSectionRegex = /【星盘数据】\n[^【]*/;
+        const newDataSection = `【星盘数据】\n${userData}\n`;
+        prompt = prompt.replace(dataSectionRegex, newDataSection);
+        console.log('✅ 已替换星盘数据，长度:', userData.length);
+    } else {
+        console.log('ℹ️ 没有可用的星盘数据');
     }
 
     document.getElementById('resultPrompt').value = prompt;
@@ -342,7 +329,7 @@ function fallbackCopy(text) {
 }
 
 // =============================================================
-// 接收从 Clean 传来的数据
+// 七、接收从 Clean 传来的数据
 // =============================================================
 function receiveCleanData() {
     // 1. 从 URL 参数读取
@@ -376,10 +363,10 @@ function receiveCleanData() {
 }
 
 // =============================================================
-// 七、页面初始化
+// 八、页面初始化
 // =============================================================
 document.addEventListener('DOMContentLoaded', function() {
     selectTopic('love');
-    // ===== 新增：接收从 clean 传来的数据 =====
+    // ===== 接收从 clean 传来的数据 =====
     receiveCleanData();
 });
