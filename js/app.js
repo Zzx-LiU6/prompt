@@ -9,6 +9,30 @@ let currentTopic = 'love';
 let currentSubtopic = null;
 let selectedQuestions = [];
 
+function receiveCleanData() {
+    // 从 localStorage 读取
+    const stored = localStorage.getItem('jhoraCleanData');
+    if (stored) {
+        window._cleanData = stored;
+        localStorage.removeItem('jhoraCleanData');  // 读取后清除，避免残留
+        setTimeout(() => {
+            showToast('✅ 已接收星盘数据，生成 Prompt 时会自动填入');
+        }, 500);
+        console.log('✅ 已接收星盘数据，长度:', window._cleanData.length);
+        return;
+    }
+
+    // 兼容旧方式：从 URL 参数读取（备用）
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get('data');
+    if (data) {
+        window._cleanData = decodeURIComponent(data);
+        showToast('✅ 已接收星盘数据（URL方式）');
+        // 清除 URL 参数，避免刷新页面时重复提示
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
 // =============================================================
 // 二、工具函数（Toast / Modal）
 // =============================================================
@@ -310,4 +334,6 @@ function fallbackCopy(text) {
 // =============================================================
 document.addEventListener('DOMContentLoaded', function() {
     selectTopic('love');
+    // ===== 新增：接收从 clean 传来的数据 =====
+    receiveCleanData();
 });
