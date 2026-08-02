@@ -70,19 +70,9 @@
                 <!-- 由 JS 动态渲染 -->
             </div>
             <div style="margin-top:16px;text-align:right;">
-                <button class="btn btn-primary" onclick="generatePrompt()">🚀 生成专属提问话术</button>
                 <button class="btn btn-gold-outline" onclick="selectAllQuestions()" style="margin-right:8px;">☑️ 全选</button>
                 <button class="btn btn-gold-outline" onclick="deselectAllQuestions()">⬜ 清空</button>
             </div>
-        </div>
-
-        <!-- ===== 新增：星盘数据粘贴框（移出弹窗，在生成前可见） ===== -->
-        <div class="step-section" id="stepDataInput" style="display:none;">
-            <div class="step-label">📋 粘贴星盘数据</div>
-            <div style="background:#0a0f16;border:1px solid #26303e;border-radius:12px;padding:12px 16px;">
-                <textarea id="userDataInput" placeholder="从 JHora 清洗工具复制数据粘贴到这里…" style="width:100%;min-height:150px;background:transparent;border:none;color:#e0dccc;font-size:12px;font-family:monospace;padding:0;resize:vertical;outline:none;"></textarea>
-            </div>
-            <div style="font-size:12px;color:#5a6373;margin-top:6px;">💡 从清洗工具复制星盘数据粘贴到这里，生成 Prompt 时会自动填入【星盘数据】区域</div>
         </div>
 
         <!-- ===== 第四步：方案看板（实时预览） ===== -->
@@ -100,15 +90,27 @@
                         <ul id="planSelectedQuestions"></ul>
                     </div>
                 </div>
-                <div class="plan-action">
-                    <button class="btn btn-primary" onclick="generatePrompt()">🚀 生成专属提问话术</button>
-                </div>
+                <!-- ===== 方案看板内的生成按钮已删除 ===== -->
             </div>
+        </div>
+
+        <!-- ===== 第五步：粘贴星盘数据（移到方案看板后面） ===== -->
+        <div class="step-section" id="stepDataInput" style="display:none;">
+            <div class="step-label">📋 粘贴星盘数据</div>
+            <div style="background:#0a0f16;border:1px solid #26303e;border-radius:12px;padding:12px 16px;">
+                <textarea id="userDataInput" placeholder="从 JHora 清洗工具复制数据粘贴到这里…" style="width:100%;min-height:150px;background:transparent;border:none;color:#e0dccc;font-size:12px;font-family:monospace;padding:0;resize:vertical;outline:none;"></textarea>
+            </div>
+            <div style="font-size:12px;color:#5a6373;margin-top:6px;">💡 从清洗工具复制星盘数据粘贴到这里，生成 Prompt 时会自动填入【星盘数据】区域</div>
+        </div>
+
+        <!-- ===== 生成按钮 ===== -->
+        <div style="text-align:center;margin-top:16px;">
+            <button class="btn btn-primary" onclick="generatePrompt()" style="padding:10px 40px;font-size:16px;">🚀 生成专属提问话术</button>
         </div>
 
         <!-- ===== 底部 Footer ===== -->
         <div class="footer">
-            <strong>📄 使用流程：</strong> ① 选择主题 → ② 选择子场景 → ③ 勾选你关心的问题 → ④ 粘贴星盘数据 → ⑤ 生成专属提问话术
+            <strong>📄 使用流程：</strong> ① 选择主题 → ② 选择子场景 → ③ 勾选问题 → ④ 查看方案 → ⑤ 粘贴星盘数据 → ⑥ 生成专属提问话术
         </div>
     </div>
 
@@ -118,7 +120,7 @@
         <div class="modal-box" style="max-width:700px;">
             <button class="close-btn" onclick="closeModal('tutorialModal')">✕</button>
             <h3>📘 使用指南</h3>
-            <div class="sub">五步生成专属提问话术，让 AI 精准回答你的问题</div>
+            <div class="sub">六步生成专属提问话术，让 AI 精准回答你的问题</div>
             <div class="tutorial-body">
                 <div class="section">
                     <div class="st">▸ 第一步：选择主题</div>
@@ -133,11 +135,15 @@
                     <p style="color:#d0d4dc;font-size:14px;">勾选你真正想知道的问题，系统会为你拼装专属的分析话术。</p>
                 </div>
                 <div class="section">
-                    <div class="st">▸ 第四步：粘贴星盘数据</div>
+                    <div class="st">▸ 第四步：查看方案</div>
+                    <p style="color:#d0d4dc;font-size:14px;">查看「数据准备清单」和「你关注的问题」，确认你的分析方案。</p>
+                </div>
+                <div class="section">
+                    <div class="st">▸ 第五步：粘贴星盘数据</div>
                     <p style="color:#d0d4dc;font-size:14px;">从 JHora 清洗工具复制标准化星盘数据，粘贴到输入框中。</p>
                 </div>
                 <div class="section">
-                    <div class="st">▸ 第五步：生成并复制</div>
+                    <div class="st">▸ 第六步：生成并复制</div>
                     <p style="color:#d0d4dc;font-size:14px;">点击「生成」，复制 Prompt，粘贴到 AI 平台即可。</p>
                 </div>
                 <div class="highlight-box" style="border-left-color:#b8943c;">
