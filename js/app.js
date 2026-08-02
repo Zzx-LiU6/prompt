@@ -1,210 +1,335 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JHora AI 提问助手</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>" />
-    <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-    <div class="container">
-        <!-- ===== 顶部导航 ===== -->
-        <header class="header">
-            <h1>✦ JHora AI 提问助手</h1>
-            <div class="header-actions">
-                <button class="btn btn-gold-outline" onclick="location.href='https://jhora-clean.pages.dev/'">🧹 去清洗星盘</button>
-                <button class="btn btn-gold-outline" onclick="openTutorialModal()">📘 使用指南</button>
+// ================================================================
+// app.js — UI 逻辑 + 状态管理
+// ================================================================
+
+// =============================================================
+// 一、状态管理
+// =============================================================
+let currentTopic = 'love';
+let currentSubtopic = null;
+let selectedQuestions = [];
+
+// =============================================================
+// 二、工具函数（Toast / Modal）
+// =============================================================
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+    });
+});
+
+function openTutorialModal() {
+    const el = document.getElementById('tutorialModal');
+    if (el) el.classList.add('open');
+}
+
+function openAI(platform) {
+    const urls = {
+        chatgpt: 'https://chat.openai.com/',
+        deepseek: 'https://chat.deepseek.com/',
+        claude: 'https://claude.ai/',
+        gemini: 'https://gemini.google.com/'
+    };
+    if (urls[platform]) {
+        window.open(urls[platform], '_blank');
+        showToast('🔗 已打开 ' + platform.charAt(0).toUpperCase() + platform.slice(1));
+    }
+}
+
+function toggleGlossary() {
+    const el = document.getElementById('glossaryContent');
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// =============================================================
+// 三、UI 渲染函数
+// =============================================================
+
+function selectTopic(topicKey) {
+    currentTopic = topicKey;
+    currentSubtopic = null;
+    selectedQuestions = [];
+
+    document.querySelectorAll('.topic-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.topic === topicKey);
+    });
+
+    const step2 = document.getElementById('step2');
+    if (step2) step2.style.display = 'block';
+
+    const step3 = document.getElementById('step3');
+    const stepDataInput = document.getElementById('stepDataInput');
+    const step4 = document.getElementById('step4');
+    if (step3) step3.style.display = 'none';
+    if (stepDataInput) stepDataInput.style.display = 'none';
+    if (step4) step4.style.display = 'none';
+
+    renderSubtopics(topicKey);
+}
+
+function renderSubtopics(topicKey) {
+    const config = SCENARIO_CONFIG[topicKey];
+    const grid = document.getElementById('subtopicGrid');
+    if (!grid) return;
+
+    if (!config || !config.subtopics || Object.keys(config.subtopics).length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#5a6373;">
+                ⚠️ 该主题的子场景正在建设中，请先选择其他主题。
             </div>
-        </header>
+        `;
+        return;
+    }
 
-        <!-- ===== 第一步：选择主题 ===== -->
-        <div class="step-section" id="step1">
-            <div class="step-label">❶ 你想问什么？</div>
-            <div class="topic-grid" id="topicGrid">
-                <div class="topic-card active" data-topic="love" onclick="selectTopic('love')">
-                    <div class="icon">❤️</div>
-                    <div class="name">感情婚姻</div>
-                    <div class="desc">脱单 / 恋爱 / 婚姻 / 复合</div>
-                </div>
-                <div class="topic-card" data-topic="career" onclick="selectTopic('career')">
-                    <div class="icon">💼</div>
-                    <div class="name">事业发展</div>
-                    <div class="desc">求职 / 晋升 / 创业 / 转行</div>
-                </div>
-                <div class="topic-card" data-topic="wealth" onclick="selectTopic('wealth')">
-                    <div class="icon">💰</div>
-                    <div class="name">财富运势</div>
-                    <div class="desc">收入 / 投资 / 债务 / 储蓄</div>
-                </div>
-                <div class="topic-card" data-topic="health" onclick="selectTopic('health')">
-                    <div class="icon">🧘</div>
-                    <div class="name">身心健康</div>
-                    <div class="desc">体质 / 手术 / 情绪 / 孕期</div>
-                </div>
-                <div class="topic-card" data-topic="study" onclick="selectTopic('study')">
-                    <div class="icon">📚</div>
-                    <div class="name">学业教育</div>
-                    <div class="desc">考试 / 择校 / 学术潜力</div>
-                </div>
-                <div class="topic-card" data-topic="dasha" onclick="selectTopic('dasha')">
-                    <div class="icon">🌊</div>
-                    <div class="name">大运流年</div>
-                    <div class="desc">当前运势 / 未来节点 / 人生周期</div>
-                </div>
+    let html = '';
+    const subtopics = config.subtopics;
+    for (const [key, sub] of Object.entries(subtopics)) {
+        html += `
+            <div class="subtopic-card" data-subtopic="${key}" onclick="selectSubtopic('${key}')">
+                <div class="icon">${sub.icon || '📌'}</div>
+                <div class="name">${sub.name}</div>
+                <div class="desc">${sub.desc || ''}</div>
             </div>
-        </div>
+        `;
+    }
+    grid.innerHTML = html;
+}
 
-        <!-- ===== 第二步：选择子场景 ===== -->
-        <div class="step-section" id="step2" style="display:none;">
-            <div class="step-label">❷ 具体是哪种情况？</div>
-            <div class="subtopic-grid" id="subtopicGrid">
-                <!-- 由 JS 动态渲染 -->
-            </div>
-        </div>
+function selectSubtopic(subKey) {
+    currentSubtopic = subKey;
+    selectedQuestions = [];
 
-        <!-- ===== 第三步：勾选问题清单 ===== -->
-        <div class="step-section" id="step3" style="display:none;">
-            <div class="step-label">❸ 你想了解哪些方面？<span style="font-weight:400;font-size:12px;color:#7a8392;text-transform:none;">（可多选，至少选1个）</span></div>
-            <div class="question-grid" id="questionGrid">
-                <!-- 由 JS 动态渲染 -->
-            </div>
-            <div style="margin-top:16px;text-align:right;">
-                <button class="btn btn-gold-outline" onclick="selectAllQuestions()" style="margin-right:8px;">☑️ 全选</button>
-                <button class="btn btn-gold-outline" onclick="deselectAllQuestions()">⬜ 清空</button>
-            </div>
-        </div>
+    document.querySelectorAll('.subtopic-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.subtopic === subKey);
+    });
 
-        <!-- ===== 第四步：方案看板（实时预览） ===== -->
-        <div class="step-section" id="step4" style="display:none;">
-            <div class="step-label">❹ 你的专属分析方案</div>
-            <div class="plan-card" id="planCard">
-                <div class="plan-row">
-                    <div class="plan-left">
-                        <div class="plan-title">📋 数据准备清单</div>
-                        <div class="data-tags" id="planDataTags"></div>
-                        <div class="data-explain" id="planDataExplain"></div>
-                    </div>
-                    <div class="plan-right">
-                        <div class="plan-title">📝 你关注的问题</div>
-                        <ul id="planSelectedQuestions"></ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+    const step3 = document.getElementById('step3');
+    const stepDataInput = document.getElementById('stepDataInput');
+    const step4 = document.getElementById('step4');
 
-        <!-- ===== 新增：星盘数据粘贴框（移出弹窗） ===== -->
-        <div class="step-section" id="stepDataInput" style="display:none;">
-            <div class="step-label">📋 粘贴星盘数据</div>
-            <div style="background:#0a0f16;border:1px solid #26303e;border-radius:12px;padding:12px 16px;">
-                <textarea id="userDataInput" placeholder="从 JHora 清洗工具复制数据粘贴到这里…" style="width:100%;min-height:150px;background:transparent;border:none;color:#e0dccc;font-size:12px;font-family:monospace;padding:0;resize:vertical;outline:none;"></textarea>
-            </div>
-            <div style="font-size:12px;color:#5a6373;margin-top:4px;">💡 从清洗工具复制星盘数据粘贴到这里，生成 Prompt 时会自动填入</div>
-        </div>
+    if (step3) step3.style.display = 'block';
+    if (stepDataInput) stepDataInput.style.display = 'block';
+    if (step4) step4.style.display = 'none';
 
-        <!-- ===== 生成按钮 ===== -->
-        <div style="text-align:center;margin-top:16px;">
-            <button class="btn btn-primary" onclick="generatePrompt()" style="padding:10px 40px;font-size:16px;">🚀 生成专属提问话术</button>
-        </div>
+    renderQuestions();
+}
 
-        <!-- ===== 底部 Footer ===== -->
-        <div class="footer">
-            <strong>📄 使用流程：</strong> ① 选择主题 → ② 选择子场景 → ③ 勾选你关心的问题 → ④ 粘贴星盘数据 → ⑤ 生成专属提问话术
-        </div>
-    </div>
+function renderQuestions() {
+    const config = SCENARIO_CONFIG[currentTopic];
+    if (!config) return;
 
-    <!-- ============================================================ -->
-    <!-- ===== 模态框：教程 ===== -->
-    <div class="modal-overlay" id="tutorialModal">
-        <div class="modal-box" style="max-width:700px;">
-            <button class="close-btn" onclick="closeModal('tutorialModal')">✕</button>
-            <h3>📘 使用指南</h3>
-            <div class="sub">五步生成专属提问话术，让 AI 精准回答你的问题</div>
-            <div class="tutorial-body">
-                <div class="section">
-                    <div class="st">▸ 第一步：选择主题</div>
-                    <p style="color:#d0d4dc;font-size:14px;">点击你当前最关心的领域：感情、事业、财运、健康、学业或大运流年。</p>
-                </div>
-                <div class="section">
-                    <div class="st">▸ 第二步：选择子场景</div>
-                    <p style="color:#d0d4dc;font-size:14px;">选择你的具体情况，比如「单身脱单」还是「已婚趋势」。</p>
-                </div>
-                <div class="section">
-                    <div class="st">▸ 第三步：勾选问题</div>
-                    <p style="color:#d0d4dc;font-size:14px;">勾选你真正想知道的问题，系统会为你拼装专属的分析话术。</p>
-                </div>
-                <div class="section">
-                    <div class="st">▸ 第四步：粘贴数据</div>
-                    <p style="color:#d0d4dc;font-size:14px;">从 JHora 清洗工具复制星盘数据，粘贴到页面下方的输入框中。</p>
-                </div>
-                <div class="section">
-                    <div class="st">▸ 第五步：生成并复制</div>
-                    <p style="color:#d0d4dc;font-size:14px;">点击「生成」，复制 Prompt，粘贴到 AI 平台即可解读。</p>
-                </div>
-                <div class="highlight-box" style="border-left-color:#b8943c;">
-                    💡 <strong>提示：</strong>如果你还没有清洗好的星盘数据，请先使用 <strong>「🧹 去清洗星盘」</strong> 工具。
-                </div>
-            </div>
-            <div style="margin-top:16px;text-align:right;">
-                <button class="btn btn-primary" onclick="closeModal('tutorialModal')">我知道了</button>
-            </div>
-        </div>
-    </div>
+    const sub = config.subtopics[currentSubtopic];
+    if (!sub) return;
 
-    <!-- ===== 模态框：Prompt 结果 ===== -->
-    <div class="modal-overlay" id="promptResultModal">
-        <div class="modal-box" style="max-width:720px;">
-            <button class="close-btn" onclick="closeModal('promptResultModal')">✕</button>
-            <h3>📝 复制这段话给 AI</h3>
-            <div class="sub" id="resultSub">已根据你的选择生成专属提问话术</div>
+    const grid = document.getElementById('questionGrid');
+    if (!grid) return;
 
-            <div class="output-area" style="margin-bottom:12px;">
-                <textarea id="resultPrompt" readonly style="min-height:240px;font-size:12px;line-height:1.8;"></textarea>
-            </div>
+    let html = '';
+    sub.questions.forEach(q => {
+        html += `
+            <label class="question-item">
+                <input type="checkbox" value="${q.id}" onchange="updateSelection()" />
+                <span class="q-label"><span class="q-id">${q.id}</span> ${q.label}</span>
+            </label>
+        `;
+    });
+    grid.innerHTML = html;
 
-            <!-- 折叠术语解释 -->
-            <div class="glossary-collapse" onclick="toggleGlossary()">
-                📖 查看本方案涉及的专业术语
-            </div>
-            <div id="glossaryContent" style="display:none;margin-top:10px;padding:12px 16px;background:#0f1620;border-radius:8px;border:1px solid #26303e;">
-                <div id="glossaryInner"></div>
-            </div>
+    selectedQuestions = [];
+    const step4 = document.getElementById('step4');
+    if (step4) step4.style.display = 'none';
 
-            <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;">
-                <button class="btn btn-primary" onclick="copyPrompt()">📋 复制 Prompt</button>
-                <button class="btn btn-gold-outline" onclick="openAI('chatgpt')">🤖 ChatGPT</button>
-                <button class="btn btn-gold-outline" onclick="openAI('deepseek')">🧠 DeepSeek</button>
-                <button class="btn btn-gold-outline" onclick="openAI('claude')">🌐 Claude</button>
-                <button class="btn btn-gold-outline" onclick="openAI('gemini')">✨ Gemini</button>
-                <button class="btn btn-danger" onclick="closeModal('promptResultModal')">关闭</button>
-            </div>
-        </div>
-    </div>
+    updatePlanPreview();
+}
 
-    <!-- ===== Toast ===== -->
-    <div class="toast" id="toast"></div>
+function updateSelection() {
+    const checkboxes = document.querySelectorAll('#questionGrid input[type="checkbox"]');
+    selectedQuestions = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
 
-    <!-- ===== config 模块 ===== -->
-    <script src="js/config/common.js"></script>
-    <script src="js/config/love.js"></script>
-    <script src="js/config/career.js"></script>
-    <script src="js/config/wealth.js"></script>
-    <script src="js/config/health.js"></script>
-    <script src="js/config/study.js"></script>
-    <script src="js/config/dasha.js"></script>
-    <script src="js/config/index.js"></script>
+    updatePlanPreview();
 
-    <!-- ===== prompt-blocks 模块 ===== -->
-    <script src="js/prompt-blocks/role.js"></script>
-    <script src="js/prompt-blocks/user-needs.js"></script>
-    <script src="js/prompt-blocks/analysis-framework.js"></script>
-    <script src="js/prompt-blocks/synastry-phase.js"></script>
-    <script src="js/prompt-blocks/output-format.js"></script>
-    <script src="js/prompt-blocks/data-placeholder.js"></script>
-    <script src="js/prompt-blocks/index.js"></script>
+    const step4 = document.getElementById('step4');
+    if (step4) {
+        if (selectedQuestions.length > 0) {
+            step4.style.display = 'block';
+        } else {
+            step4.style.display = 'none';
+        }
+    }
+}
 
-    <!-- ===== renderer + app ===== -->
-    <script src="js/renderer.js"></script>
-    <script src="js/app.js"></script>
-</body>
-</html>
+function selectAllQuestions() {
+    document.querySelectorAll('#questionGrid input[type="checkbox"]').forEach(cb => cb.checked = true);
+    updateSelection();
+}
+
+function deselectAllQuestions() {
+    document.querySelectorAll('#questionGrid input[type="checkbox"]').forEach(cb => cb.checked = false);
+    updateSelection();
+}
+
+// =============================================================
+// 四、方案看板（实时预览）
+// =============================================================
+function updatePlanPreview() {
+    const config = SCENARIO_CONFIG[currentTopic];
+    if (!config) return;
+
+    const sub = config.subtopics[currentSubtopic];
+    if (!sub) {
+        document.getElementById('planDataTags').innerHTML = '<span style="color:#5a6373;">请选择子场景</span>';
+        document.getElementById('planDataExplain').textContent = '';
+        document.getElementById('planSelectedQuestions').innerHTML = '';
+        return;
+    }
+
+    const details = getDataTagsWithDetails(currentTopic, currentSubtopic);
+
+    let tagsHtml = '';
+    
+    // 必选标签：点击显示 desc
+    if (details.required.length > 0) {
+        tagsHtml = details.required.map(item => {
+            const descText = item.desc || '基础必选数据';
+            return `<span class="tag-required clickable" onclick="showToast('📌 ${item.label}：${descText}')">✅ ${item.label}</span>`;
+        }).join(' ');
+    }
+
+    // 可选标签：点击显示 benefit，没有则显示 desc
+    if (details.optional.length > 0) {
+        tagsHtml += ' ';
+        tagsHtml += details.optional.map(item => {
+            const msg = item.benefit || item.desc || '可选数据，建议提供';
+            return `<span class="tag-optional clickable" onclick="showToast('🔹 ${item.label}：${msg}')">➕ ${item.label}</span>`;
+        }).join(' ');
+    }
+    
+    document.getElementById('planDataTags').innerHTML = tagsHtml || '<span style="color:#5a6373;">基础数据已包含</span>';
+
+    document.getElementById('planDataExplain').textContent = sub.dataExplain || '💡 请根据清单准备数据。';
+
+    const questions = sub.questions.filter(q => selectedQuestions.includes(q.id));
+    if (questions.length === 0) {
+        document.getElementById('planSelectedQuestions').innerHTML =
+            '<li style="color:#5a6373;">请在上方勾选你关心的问题</li>';
+    } else {
+        document.getElementById('planSelectedQuestions').innerHTML = questions.map(q =>
+            `<li><span class="q-id">${q.id}</span> ${q.label}</li>`
+        ).join('');
+    }
+}
+
+// =============================================================
+// 五、生成 Prompt
+// =============================================================
+function generatePrompt() {
+    if (selectedQuestions.length === 0) {
+        showToast('⚠️ 请至少勾选一个问题');
+        return;
+    }
+
+    const config = SCENARIO_CONFIG[currentTopic];
+    if (!config) { showToast('⚠️ 主题配置缺失'); return; }
+
+    const sub = config.subtopics[currentSubtopic];
+    if (!sub) { showToast('⚠️ 请选择子场景'); return; }
+
+    let prompt = renderPrompt(currentTopic, currentSubtopic, selectedQuestions);
+    if (!prompt) {
+        showToast('⚠️ 生成失败，请重试');
+        return;
+    }
+
+    // ===== 替换星盘数据（从用户输入框读取） =====
+    const userDataInput = document.getElementById('userDataInput');
+    let userData = '';
+
+    if (userDataInput) {
+        userData = userDataInput.value.trim();
+    }
+
+    if (userData) {
+        // 替换整个【星盘数据】区域
+        const dataSectionRegex = /【星盘数据】\n[^【]*/;
+        const newDataSection = `【星盘数据】\n${userData}\n`;
+        prompt = prompt.replace(dataSectionRegex, newDataSection);
+        console.log('✅ 已替换星盘数据，长度:', userData.length);
+    } else {
+        console.log('ℹ️ 没有可用的星盘数据');
+    }
+
+    document.getElementById('resultPrompt').value = prompt;
+    document.getElementById('resultSub').textContent =
+        `主题：${config.name} ｜ 场景：${sub.name} ｜ 已选 ${selectedQuestions.length} 个问题`;
+
+    // 术语表
+    const glossary = getGlossary(currentTopic, currentSubtopic);
+    const inner = document.getElementById('glossaryInner');
+    if (glossary.length > 0) {
+        inner.innerHTML = glossary.map(item =>
+            `<div class="glossary-item"><span class="term">${item.term}</span><span class="def">${item.def}</span></div>`
+        ).join('');
+    } else {
+        inner.innerHTML = '<div style="color:#5a6373;font-size:13px;">暂无术语解释</div>';
+    }
+    document.getElementById('glossaryContent').style.display = 'none';
+
+    document.getElementById('promptResultModal').classList.add('open');
+    showToast('✅ 专属提问话术已生成');
+}
+
+// =============================================================
+// 六、复制 Prompt
+// =============================================================
+function copyPrompt() {
+    const text = document.getElementById('resultPrompt').value;
+    if (!text) { showToast('⚠️ 没有内容可复制'); return; }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('📝 Prompt 已复制，请前往 AI 粘贴使用');
+        }).catch(() => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const ta = document.getElementById('resultPrompt');
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showToast('📝 Prompt 已复制');
+    } catch (e) {
+        showToast('⚠️ 复制失败，请手动选择复制');
+    }
+}
+
+// =============================================================
+// 七、页面初始化
+// =============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    selectTopic('love');
+});
