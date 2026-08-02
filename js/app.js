@@ -269,6 +269,28 @@ function generatePrompt() {
         showToast('⚠️ 生成失败，请重试');
         return;
     }
+    
+    const userDataInput = document.getElementById('userDataInput');
+    if (userDataInput) {
+        const userData = userDataInput.value.trim();
+        if (userData) {
+            // 查找【星盘数据】部分并替换
+            // 方法：把占位符替换成用户数据
+            const placeholderPattern = /（请在此处粘贴您的标准化星盘文本）/;
+            const synastryPattern = /（请在此处粘贴双方标准化星盘文本）/;
+            
+            if (prompt.match(placeholderPattern) || prompt.match(synastryPattern)) {
+                prompt = prompt.replace(placeholderPattern, userData);
+                prompt = prompt.replace(synastryPattern, userData);
+                // 如果替换成功，删除多余的提示
+                prompt = prompt.replace(/提示：您可以从 JHora 清洗工具复制数据粘贴到此区域。\n?/, '');
+            } else {
+                // 如果没有找到占位符，说明可能已经被替换过了，直接追加数据
+                // 但通常不会出现这种情况
+                console.log('⚠️ 未找到星盘数据占位符，请检查');
+            }
+        }
+    }
 
     document.getElementById('resultPrompt').value = prompt;
     document.getElementById('resultSub').textContent =
