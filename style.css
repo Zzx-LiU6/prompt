@@ -571,3 +571,53 @@ body {
 .tag-optional:active {
     transform: scale(0.95);  /* 点击反馈 */
 }
+
+/* ===== 分盘卡片 ===== */
+.divisional-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.divisional-card {
+    background: #131a24;
+    border: 2px solid #26303e;
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.divisional-card:hover {
+    border-color: #7a8392;
+    background: #181f2b;
+    transform: translateY(-2px);
+}
+.divisional-card.active {
+    border-color: #b8943c;
+    background: #1a232f;
+    box-shadow: 0 0 20px rgba(184, 148, 60, 0.08);
+}
+.divisional-card .icon {
+    font-size: 28px;
+}
+.divisional-card .name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f0e6d0;
+    margin-top: 4px;
+}
+.divisional-card .desc {
+    font-size: 11px;
+    color: #7a8392;
+    margin-top: 2px;
+}
+.divisional-card .badge {
+    font-size: 9px;
+    color: #5a6373;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border: 1px solid #1e2735;
+    border-radius: 10px;
+    display: inline-block;
+}
