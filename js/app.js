@@ -8,6 +8,8 @@
 let currentTopic = 'love';
 let currentSubtopic = null;
 let selectedQuestions = [];
+let currentTab = 'thematic';  // 'thematic' | 'divisional'
+let selectedDivisional = null;
 
 // =============================================================
 // 二、工具函数（Toast / Modal）
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     selectTopic('love');
     // 更新历史角标
     updatePromptHistoryBadge();
+    renderDivisionalCards();
 });
 
 function openTutorialModal() {
@@ -62,6 +65,17 @@ function toggleGlossary() {
     if (el) {
         el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
+}
+
+// =============================================================
+// 三、Tab 切换
+// =============================================================
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
 }
 
 // =============================================================
@@ -163,6 +177,97 @@ function renderQuestions() {
     if (step4) step4.style.display = 'none';
 
     updatePlanPreview();
+}
+
+// =============================================================
+// 八、分盘解读（新增板块）
+// =============================================================
+
+function renderDivisionalCards() {
+    const grid = document.getElementById('divisionalGrid');
+    if (!grid) return;
+
+    let html = '';
+    for (const [key, data] of Object.entries(DIVISIONAL_PROMPTS)) {
+        html += `
+            <div class="divisional-card" data-key="${key}" onclick="selectDivisional('${key}')">
+                <div class="icon">${data.icon}</div>
+                <div class="name">${data.name}</div>
+                <div class="desc">${data.desc}</div>
+                <div class="badge">${data.enabled ? data.enabled.join(' · ') : '需数据'}</div>
+            </div>
+        `;
+    }
+    grid.innerHTML = html;
+}
+
+function selectDivisional(key) {
+    const data = DIVISIONAL_PROMPTS[key];
+    if (!data) return;
+
+    selectedDivisional = key;
+
+    // 高亮卡片
+    document.querySelectorAll('.divisional-card').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.divisional-card[data-key="${key}"]`).classList.add('active');
+
+    const userData = document.getElementById('divisionalDataInput').value.trim();
+    let prompt = data.prompt;
+
+    console.log('🔍 用户数据长度:', userData.length);
+
+    // 检查 prompt 中是否已有 【星盘数据】 标记
+    if (!prompt.includes('【星盘数据】')) {
+        // 如果没有，在末尾追加
+        prompt = prompt + '\n\n【星盘数据】\n（请在此处粘贴您的标准化星盘文本）';
+        console.log('ℹ️ 已自动追加 【星盘数据】 占位符');
+    }
+
+    if (userData) {
+        // 替换占位符
+        const marker = '【星盘数据】';
+        const idx = prompt.indexOf(marker);
+        if (idx !== -1) {
+            const start = idx + marker.length;
+            let end = prompt.indexOf('【', start);
+            if (end === -1) {
+                end = prompt.length;
+            }
+            prompt = prompt.substring(0, idx) + marker + '\n' + userData + '\n\n' + prompt.substring(end);
+            console.log('✅ 已替换星盘数据');
+        }
+    } else {
+        console.log('ℹ️ 没有可用的星盘数据');
+    }
+
+    document.getElementById('divisionalPromptOutput').value = prompt;
+    document.getElementById('divisionalResult').style.display = 'block';
+}
+
+// =============================================================
+// 生成分盘 Prompt（供“生成 Prompt”按钮调用）
+// =============================================================
+function generateDivisionalPrompt() {
+    if (!selectedDivisional) {
+        showToast('⚠️ 请先选择一个分盘');
+        return;
+    }
+    // 重新执行选择，刷新显示（会读取最新的输入框数据）
+    selectDivisional(selectedDivisional);
+    showToast('✅ Prompt 已更新');
+}
+
+function copyDivisionalPrompt() {
+    const text = document.getElementById('divisionalPromptOutput').value;
+    if (!text) { showToast('⚠️ 没有内容可复制'); return; }
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('📝 Prompt 已复制');
+    }).catch(() => {
+        const ta = document.getElementById('divisionalPromptOutput');
+        ta.select();
+        document.execCommand('copy');
+        showToast('📝 Prompt 已复制');
+    });
 }
 
 function updateSelection() {
