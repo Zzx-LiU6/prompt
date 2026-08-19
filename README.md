@@ -85,7 +85,7 @@ cd jhora-prompt
 # 直接用浏览器打开 index.html
 ```
 
-## 使用流程
+## 📖 使用流程
 
 ### 按主题提问
 1. 选择主题（感情/事业/财运/健康/学业/大运）
@@ -102,7 +102,7 @@ cd jhora-prompt
 5. 如已粘贴数据，【星盘数据】区域自动填入
 6. 一键复制 Prompt，粘贴到 AI 平台
 
-## 与 JHora 清洗工具的关系
+## 🔗 与 JHora 清洗工具的关系
 
 建议配合使用 [JHora 星盘清洗工具](https://jhora-clean.pages.dev)：
 
@@ -110,7 +110,7 @@ cd jhora-prompt
 2. 用提问助手生成专属提问话术
 3. 将清洗好的数据粘贴到 Prompt 中，发给 AI
 
-## 项目结构
+## 📁 项目结构
 
 ```text
 /
@@ -130,6 +130,6 @@ cd jhora-prompt
 │       └── divisional.js      # 分盘解读配置（10个分盘 Prompt）
 └── prompt-blocks/             # Prompt 模块组件
 
-## License
+## 📄 License
 
 MIT
