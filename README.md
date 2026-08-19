@@ -82,6 +82,7 @@
 ```bash
 git clone https://github.com/Zzx-LiU6/jhora-prompt.git
 cd jhora-prompt
+# 直接用浏览器打开 index.html
 ```
 
 ## 📖 使用流程
